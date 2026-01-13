@@ -50,79 +50,78 @@ class Node:
     self.range = range
     self.prev = prev
     self.next = next
-  def delete(self):
-    prev, next = self.prev, self.next
-    if self.next is not None:
-      self.next.prev = prev
-    if self.prev is not None:
-      self.prev.next = next
-    del self
-    return (prev, next)
+
+class LinkedList:
+  def __init__(self, head):
+    self.head = head
+    self.cur = head
+    self.aux = None  # keeps track of the next node when the head is deleted and self.cur becomes None
+
+  def get_current_node(self):
+    return self.cur
+
+  def move_to_next(self):
+    if self.cur is not None:
+      self.cur = self.cur.next
+    else:
+      self.cur = self.aux
+
+  def move_to_head(self):
+    self.cur = self.head
+
+  def delete_current_node(self):
+    prev, next = self.cur.prev, self.cur.next
+    is_head = prev is None
+    if not is_head:
+      prev.next = next      
+    if next is not None:
+      next.prev = prev
+    del self.cur
+    self.cur = prev
+    if is_head:
+      self.head = next
+      self.aux = next
+
   def append(self, node):
-    self.next = node
-    node.prev = self
+    if self.cur is None:
+      self.head = node
+    else:
+      self.cur.next = node
+    node.prev = self.cur
+
+  def is_end(self):
+    if self.cur is None:
+      return self.aux is None
+    return self.cur.next is None
 
 
-node = Node(range_list[0])
-head = node
+lst = LinkedList(Node(range_list[0]))
 for r in range_list:
-  node = head
   left, right = r[0], r[-1]
+  lst.move_to_head()
   while True:
-    if (left < node.range[0]) and (right > node.range[-1]):
-      prev, next = node.delete()
-      if prev is None:
-        if next is not None:
-          head = next
-          node = next
-          continue
-        else:
-          head = Node(range(left, right + 1))
-          break
-      if next is None:
-        prev.append(Node(range(left, right + 1)))
-        break
+    node = lst.get_current_node()
+    if (left in node.range) and (right in node.range):
+      break
+    elif (left < node.range[0]) and (right > node.range[-1]):
+      lst.delete_current_node()
     elif (left in node.range) and (right not in node.range):
       left = node.range[0]
-      prev, next = node.delete()
-      if prev is None:
-        if next is not None:
-          head = next
-          node = next
-          continue
-        else:
-          head = Node(range(left, right + 1))
-          break
-      if next is None:
-        prev.append(Node(range(left, right + 1)))
-        break
+      lst.delete_current_node()
     elif (left not in node.range) and (right in node.range):
       right = node.range[-1]
-      prev, next = node.delete()
-      if prev is None:
-        if next is not None:
-          head = next
-          node = next
-          continue
-        else:
-          head = Node(range(left, right + 1))
-          break
-      if next is None:
-        prev.append(Node(range(left, right + 1)))
-        break
-    elif (left not in node.range) and (right not in node.range):
-      next = node.next
-      if next is None:
-        node.append(Node(range(left, right + 1)))
-        break
-    elif (left in node.range) and (right in node.range):
-      break
-    node = next
+      lst.delete_current_node()
 
-cur = head
+    if lst.is_end():
+      lst.append(Node(range(left, right + 1)))
+      break
+    else:
+      lst.move_to_next()
+
+lst.move_to_head()
 total_range_lengths = 0
-while cur is not None:
-  total_range_lengths += len(cur.range)
-  cur = cur.next
+while lst.get_current_node() is not None:
+  total_range_lengths += len(lst.get_current_node().range)
+  lst.move_to_next()
 
 print(total_range_lengths)
